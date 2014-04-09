@@ -7,7 +7,8 @@
     <license>GPL</license>
     <keywords>cordova, scp, copy, secure, tlantic</keywords>
 
-    <js-module src="www/scp.js" name="SCP">
+    <!-- www -->
+    <js-module src="www/scp.js" name="SecureCopy">
         <clobbers target="window.tlantic.plugins.scp" />
     </js-module>
 
