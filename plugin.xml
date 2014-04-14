@@ -12,6 +12,8 @@
         <clobbers target="window.tlantic.plugins.scp" />
     </js-module>
 
+    <framework src="src/windows8/WinSCPnet.dll" custom="true"/>
+
    <!-- windows8 -->
     <platform name="windows8">
         <js-module src="src/windows8/ScpProxy.js" name="ScpProxy">

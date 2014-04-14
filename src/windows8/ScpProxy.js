@@ -1,4 +1,4 @@
-   /* global console, exports, require */
+/* global console, exports, require */
     'use strict';
 
     // performs copy itself
@@ -16,7 +16,7 @@
         } else {
 
             // launching copy
-            doCopy.apply(args);
+            doCopy.apply(this, args);
 
             // ending with success
             win();

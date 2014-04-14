@@ -9,7 +9,7 @@ function SCP(){
 }
 
 // copy method
-SCP.prototype.copy = function (successCallback, errorCallback, username, password, sourceFile, remoteFile) {
+SCP.prototype.copy = function (username, password, sourceFile, remoteFile, successCallback, errorCallback) {
     exec(successCallback, errorCallback, this.pluginRef, 'copyToRemote', [username, password, sourceFile, remoteFile]);
 };
 
