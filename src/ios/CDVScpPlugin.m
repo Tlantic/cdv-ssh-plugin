@@ -1,5 +1,6 @@
 #import "CDVScpPlugin.h"
 #import <Cordova/CDV.h>
+#import <NMSSH/NMSSH.h>
 
 @implementation CDVScpPlugin: CDVPlugin
 
@@ -15,9 +16,26 @@
         // running in background to avoid thread locks
         [self.commandDelegate runInBackground:^{
             
-            CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
             
+            CDVPluginResult* result = nil;
+            NSString* user = nil;
+            NSString* pass = nil;
+            NSString* source = nil;
+            NSString* destination = nil;
             
+            @try {
+                user = [command.arguments objectAtIndex:0];
+                pass = [command.arguments objectAtIndex:1];
+                source = [command.arguments objectAtIndex:2];
+                destination = [command.arguments objectAtIndex:3];
+                
+                
+            }
+            @catch (NSException *exception) {
+                NSLog(@"Exception: %@", exception);
+                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unexpected exception when executing 'copyToRemote' action."];
+                
+            }
             
             // answering
             [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
