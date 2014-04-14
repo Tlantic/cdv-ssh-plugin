@@ -20,6 +20,12 @@
             </feature>
         </config-file>
 
+        <!-- SSH framework -->
+        <framework src="libz.dylib" />
+        <framework src="CFNetwork.framework" />
+        <framework src="src/ios/frameworks/NMSSH.framework" custom="true" />
+
+        <!-- Scp code -->
         <header-file src="src/ios/CDVScpPlugin.h" />
         <source-file src="src/ios/CDVScpPlugin.m" />
     </platform>
