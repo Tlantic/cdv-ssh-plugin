@@ -17,24 +17,66 @@
         [self.commandDelegate runInBackground:^{
             
             
-            CDVPluginResult* result = nil;
+            CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
             NSString* user = nil;
             NSString* pass = nil;
             NSString* source = nil;
             NSString* destination = nil;
+            NMSSHSession* session = nil;
             
             @try {
+                
+                // getting parameters
                 user = [command.arguments objectAtIndex:0];
                 pass = [command.arguments objectAtIndex:1];
                 source = [command.arguments objectAtIndex:2];
                 destination = [command.arguments objectAtIndex:3];
                 
+                // opening SSH session
+                NSLog(@"- Opening connection with %@ ", destination);
+                session = [NMSSHSession connectToHost:destination withUsername:user];
                 
+                // checking connection
+                if (session.isConnected) {
+                    NSLog(@"- Connection with host has been stablished!");
+                    NSLog(@"- Authenticating with %@", user);
+                    
+                    // authenticating
+                    [session authenticateByPassword:pass];
+                    
+                    if (session.isAuthorized) {
+                        NSLog(@"- Authentication succeeded");
+                    } else {
+                        NSLog(@"- Authentication failed");
+                        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed during authentication process."];
+                    }
+                    
+                    
+                    // closing connection
+                    [session disconnect];
+                    
+                } else {
+                    NSLog(@"- Unable to connect with host");
+                    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed during authentication process."];
+                }
+                
+                
+                /*
+                NSError *error = nil;
+                NSString *response = [session.channel execute:@"ls -l /var/www/" error:&error];
+                NSLog(@"List of my sites: %@", response);
+                
+                BOOL success = [session.channel uploadFile:@"~/index.html" to:@"/var/www/9muses.se/"];
+                */
             }
             @catch (NSException *exception) {
                 NSLog(@"Exception: %@", exception);
                 result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unexpected exception when executing 'copyToRemote' action."];
                 
+                // releasing connection
+                if (session.isConnected) {
+                    [session disconnect];
+                }
             }
             
             // answering
