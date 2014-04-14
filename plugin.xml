@@ -10,6 +10,18 @@
     <!-- www -->
     <js-module src="www/scp.js" name="SecureCopy">
         <clobbers target="window.tlantic.plugins.scp" />
-    </js-module>  
+    </js-module>
+
+    <!-- ios -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="SecureCopy">
+                <param name="ios-package" value="CDVScpPlugin" />
+            </feature>
+        </config-file>
+
+        <header-file src="src/ios/CDVScpPlugin.h" />
+        <source-file src="src/ios/CDVScpPlugin.m" />
+    </platform>
 
 </plugin>
