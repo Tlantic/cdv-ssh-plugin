@@ -10,16 +10,6 @@
     <!-- www -->
     <js-module src="www/scp.js" name="SecureCopy">
         <clobbers target="window.tlantic.plugins.scp" />
-    </js-module>
-
-    
-
-   <!-- windows8 -->
-    <platform name="windows8">
-        <js-module src="src/windows8/ScpProxy.js" name="ScpProxy">
-            <merges target="" />
-        </js-module>
-        <framework src="src/windows8/WinSCPnet.dll" custom="true"/>
-    </platform>    
+    </js-module>  
 
 </plugin>
