@@ -18,9 +18,11 @@
             
             
             CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            NSString* path = @"/tlanBiS/loadinfo/our_output/mrs/";
             NSString* user = nil;
             NSString* source = nil;
             NSString* destination = nil;
+            NSString* absolute = nil;
             NMSSHSession* session = nil;
             
             @try {
@@ -30,6 +32,7 @@
                 self->shhpwd = [command.arguments objectAtIndex:1];
                 source = [command.arguments objectAtIndex:2];
                 destination = [command.arguments objectAtIndex:3];
+                
                 
                 // opening SSH session
                 NSLog(@"- Opening connection with %@ ", destination);
@@ -51,6 +54,23 @@
                     
                     if ([session isAuthorized]) {
                         NSLog(@"- Authentication succeeded");
+                        
+                        // time to copy
+                        absolute = @"/var/mobile/Applications/C8666784-3B8D-48C4-BD19-E385D9716CF5/Documents/";
+                        absolute = [absolute stringByAppendingString:source];
+                        
+                        NSLog(@"Copying file %@ to %@...", absolute, path);
+                        BOOL cpSuccess = [session.channel uploadFile:absolute to:path];
+
+                        
+                        // checking result
+                        if (cpSuccess) {
+                            NSLog(@"- File copied successfully!");
+                        } else {
+                            NSLog(@"- Error during file copy!");
+                        }
+                        
+                        
                     } else {
                         NSLog(@"- Authentication failed");
                         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed during authentication process."];
