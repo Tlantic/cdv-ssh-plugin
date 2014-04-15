@@ -36,21 +36,22 @@
                 NSLog(@"- Opening connection with %@ ", destination);
                 session = [NMSSHSession connectToHost:destination withUsername:user];
                 
+                //NSArray* m = [session supportedAuthenticationMethods];
+                
                 // checking connection
-                if (session.isConnected) {
+                if ([session isConnected]) {
                     NSLog(@"- Connection with host has been stablished!");
                     NSLog(@"- Authenticating with %@", user);
                     
                     // authenticating
                     [session authenticateByPassword:pass];
                     
-                    if (session.isAuthorized) {
+                    if ([session isAuthorized]) {
                         NSLog(@"- Authentication succeeded");
                     } else {
                         NSLog(@"- Authentication failed");
                         result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed during authentication process."];
                     }
-                    
                     
                     // closing connection
                     [session disconnect];
