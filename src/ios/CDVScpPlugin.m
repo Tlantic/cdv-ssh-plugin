@@ -19,7 +19,6 @@
             
             CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
             NSString* user = nil;
-            NSString* pass = nil;
             NSString* source = nil;
             NSString* destination = nil;
             NMSSHSession* session = nil;
@@ -28,13 +27,17 @@
                 
                 // getting parameters
                 user = [command.arguments objectAtIndex:0];
-                pass = [command.arguments objectAtIndex:1];
+                self->shhpwd = [command.arguments objectAtIndex:1];
                 source = [command.arguments objectAtIndex:2];
                 destination = [command.arguments objectAtIndex:3];
                 
                 // opening SSH session
                 NSLog(@"- Opening connection with %@ ", destination);
-                session = [NMSSHSession connectToHost:destination withUsername:user];
+                session = [[NMSSHSession alloc] initWithHost:destination andUsername:user];
+                session.delegate = self;
+                [session connect];
+
+                
                 
                 //NSArray* m = [session supportedAuthenticationMethods];
                 
@@ -44,7 +47,7 @@
                     NSLog(@"- Authenticating with %@", user);
                     
                     // authenticating
-                    [session authenticateByPassword:pass];
+                    [session authenticateByKeyboardInteractive];
                     
                     if ([session isAuthorized]) {
                         NSLog(@"- Authentication succeeded");
@@ -85,4 +88,19 @@
         }];
     }
 }
+
+
+- (void)session:(NMSSHSession *)session didDisconnectWithError:(NSError *)error {
+    NSLog(@"DISCONNECT!!!");
+}
+
+- (NSString *)session:(NMSSHSession *)session keyboardInteractiveRequest:(NSString *)request {
+    NSLog(@"### THIS IS THE REQUEST %@", request);
+    return self->shhpwd;
+}
+- (BOOL)session:(NMSSHSession *)session shouldConnectToHostWithFingerprint:(NSString *)fingerprint{
+    NSLog(@"FINGERPRINT STUFF");
+    return YES;
+}
+
 @end
