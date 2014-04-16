@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+    id="com.tlantic.plugins.ssh"
+    version="0.1.0">
+    <name>SSH</name>
+    <description>Tlantic SSH plugin</description>
+    <license>GPL</license>
+    <keywords>cordova, ssh, sftp, scp, copy, secure, tlantic</keywords>
+
+    <!-- www -->
+    <js-module src="www/ssh.js" name="SSH">
+        <clobbers target="window.tlantic.plugins.ssh" />
+    </js-module>
+
+    <!-- ios -->
+    <platform name="ios">
+        <config-file target="config.xml" parent="/*">
+            <feature name="SSH">
+                <param name="ios-package" value="CDVSSHPlugin" />
+            </feature>
+        </config-file>
+
+        <!-- SSH framework -->
+        <framework src="libz.dylib" />
+        <framework src="CFNetwork.framework" />
+        <framework src="src/ios/frameworks/NMSSH.framework" custom="true" />
+
+        <!-- Plugin Code / Channel Management code -->
+        <header-file src="src/ios/CDVSSHPlugin.h" />
+        <source-file src="src/ios/CDVSSHPlugin.m" />
+
+        <!-- SSH code -->
+        <header-file src="src/ios/SSHChannel.h" />
+        <source-file src="src/ios/SSHChannel.m" />
+    </platform>
+
+</plugin>
