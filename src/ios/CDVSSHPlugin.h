@@ -8,6 +8,6 @@
 -(void) connect: (CDVInvokedUrlCommand *) command;
 -(void) disconnect: (CDVInvokedUrlCommand *) command;
 -(void) disconnectAll: (CDVInvokedUrlCommand *) command;
--(BOOL) disposeConnection :(NSString *)key;
+-(BOOL) disposeChannel :(NSString *)key;
 
 @end

@@ -18,4 +18,14 @@
     [session connect];
     return [session isConnected];
 }
+
+- (BOOL)isConnected {
+    return [session isConnected];
+}
+
+- (void)close {
+    if ([self isConnected]) {
+        [session disconnect];
+    }
+}
 @end

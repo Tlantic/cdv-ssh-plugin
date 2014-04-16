@@ -15,5 +15,7 @@
 
 - (id)initWithNetworkAddress :(NSString*)targetHost :(int)targetPort;
 - (BOOL)open :(NSString*)user;
+- (BOOL)isConnected;
+- (void)close;
 
 @end
