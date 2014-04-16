@@ -1,6 +1,7 @@
 #import <Cordova/CDV.h>
 #import "CDVSSHPlugin.h"
 #import "SSHChannel.h"
+#import "CDVLocalFileSystem.h"
 
 @implementation CDVSSHPlugin: CDVPlugin
 
@@ -156,6 +157,49 @@
     }
 }
 
+-(void) disconnectAll: (CDVInvokedUrlCommand *) command {
+    
+    // running in background to avoid thread locks
+    [self.commandDelegate runInBackground:^{
+        
+        CDVPluginResult* result = nil;
+        BOOL partial = NO;
+        
+        @try {
+            
+            NSLog(@"- Preparing to close all connections...");
+            // iterating connection pool
+            for (id key in pool) {
+                
+                // try close it
+                if (![self disposeChannel:key]) {
+                    // if no success, need to set as partial disconnection
+                    partial = YES;
+                }
+            }
+            
+            //formatting result
+            if (partial) {
+                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Some connections could not be closed."];
+                
+            } else {
+                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+            }
+            
+        }
+        @catch (NSException *exception) {
+            NSLog(@"Exception: %@", exception);
+            result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unexpected exception when executing 'disconnectAll' action."];
+        }
+        @finally {
+            //returning callback resolution
+            [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        }
+        
+    }];
+    
+}
+
 -(void) authenticateByKeyboard: (CDVInvokedUrlCommand *) command {
     // validating parameters
     if ([command.arguments count] < 2) {
@@ -200,6 +244,59 @@
             @catch (NSException *exception) {
                 NSLog(@"Exception: %@", exception);
                 result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unexpected exception when executing 'authenticateByKeyboard' action."];
+            }
+            
+            //returning callback resolution
+            [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        }];
+        
+    }
+}
+
+
+-(void) scp: (CDVInvokedUrlCommand *) command {
+    // validating parameters
+    if ([command.arguments count] < 3) {
+        // triggering parameter error
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments when calling 'scp' action."];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        
+    } else {
+        
+        // running in background to avoid thread locks
+        [self.commandDelegate runInBackground:^{
+            
+            CDVPluginResult* result= nil;
+            NSString *key = nil;
+            NSString *file = nil;
+            NSString *path = nil;
+            SSHChannel *channel = nil;
+            
+            @try {
+                // preparing parameters
+                key = [command.arguments objectAtIndex:0];
+                file = [command.arguments objectAtIndex:1];
+                path = [command.arguments objectAtIndex:2];
+                channel = [pool objectForKey:key];
+                
+                // resolving absolute physical file path
+                NSString* absolute = [NSTemporaryDirectory() stringByAppendingString:file]; //@"/var/mobile/Applications/";
+                //absolute = [absolute stringByAppendingString:file];
+                
+                
+                // copying file
+                NSLog(@"- Copying file %@ to %@ ...", absolute, path);
+                
+                if ([channel uploadFile:absolute :path]) {
+                    NSLog(@"- Secure copy completed successfully!");
+                    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                } else {
+                    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"- Unable to copy file!"];
+                }
+            }
+            @catch (NSException *exception) {
+                NSLog(@"Exception: %@", exception);
+                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"- Unexpected exception when executing 'SCP' action."];
             }
             
             //returning callback resolution

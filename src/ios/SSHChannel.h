@@ -24,4 +24,6 @@
 - (void)session:(NMSSHSession *)session didDisconnectWithError:(NSError *)error;
 - (NSString *)session:(NMSSHSession *)session keyboardInteractiveRequest:(NSString *)request;
 - (BOOL)session:(NMSSHSession *)session shouldConnectToHostWithFingerprint:(NSString *)fingerprint;
+
+- (BOOL)uploadFile  :(NSString*)file    :(NSString*)path;
 @end

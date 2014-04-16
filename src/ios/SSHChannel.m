@@ -53,4 +53,8 @@
 - (BOOL)session:(NMSSHSession *)session shouldConnectToHostWithFingerprint:(NSString *)fingerprint{
     return YES;
 }
+
+- (BOOL)uploadFile  :(NSString*)file    :(NSString*)path {
+    return [session.channel uploadFile:file to:path];
+}
 @end

@@ -12,4 +12,6 @@
 
 -(void) authenticateByKeyboard: (CDVInvokedUrlCommand *) command;
 
+-(void) scp: (CDVInvokedUrlCommand *) command;
+
 @end
