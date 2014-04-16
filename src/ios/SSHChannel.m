@@ -14,7 +14,7 @@
 
 - (BOOL)open :(NSString*)user {
     session = [[NMSSHSession alloc] initWithHost:_host port:_port andUsername:user];
-    //session.delegate = self;
+    session.delegate = self;
     [session connect];
     return [session isConnected];
 }
@@ -27,5 +27,30 @@
     if ([self isConnected]) {
         [session disconnect];
     }
+}
+
+- (BOOL) isAuthenticationMethodSupported :(NSString*)method {
+    NSArray* supported = [session supportedAuthenticationMethods];
+    
+    return [supported containsObject:method];
+}
+
+- (BOOL) authenticateByKeyboardInteractive :(NSString*)password {
+    // authenticating
+    _kbpwd = password;
+    [session authenticateByKeyboardInteractive];
+    
+    return [session isAuthorized];
+}
+
+- (void)session:(NMSSHSession *)session didDisconnectWithError:(NSError *)error {
+    NSLog(@"DISCONNECTED!!!");
+}
+
+- (NSString *)session:(NMSSHSession *)session keyboardInteractiveRequest:(NSString *)request {
+    return self->_kbpwd;
+}
+- (BOOL)session:(NMSSHSession *)session shouldConnectToHostWithFingerprint:(NSString *)fingerprint{
+    return YES;
 }
 @end

@@ -10,4 +10,6 @@
 -(void) disconnectAll: (CDVInvokedUrlCommand *) command;
 -(BOOL) disposeChannel :(NSString *)key;
 
+-(void) authenticateByKeyboard: (CDVInvokedUrlCommand *) command;
+
 @end

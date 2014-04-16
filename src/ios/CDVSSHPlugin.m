@@ -154,7 +154,59 @@
         }];
         
     }
-    
+}
+
+-(void) authenticateByKeyboard: (CDVInvokedUrlCommand *) command {
+    // validating parameters
+    if ([command.arguments count] < 2) {
+        // triggering parameter error
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments when calling 'authenticateByKeyboard' action."];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        
+    } else {
+        
+        // running in background to avoid thread locks
+        [self.commandDelegate runInBackground:^{
+            
+            CDVPluginResult* result= nil;
+            NSString *key = nil;
+            NSString *password = nil;
+            SSHChannel *channel = nil;
+            
+            @try {
+                // preparing parameters
+                key = [command.arguments objectAtIndex:0];
+                password = [command.arguments objectAtIndex:1];
+                channel = [pool objectForKey:key];
+
+                // checking if method is supported
+                NSLog(@"- Checking supported authentication methods...");
+                if (![channel isAuthenticationMethodSupported:@"keyboard-interactive"]) {
+                    NSLog(@"- keyboard-interactive is not supported by %@", key);
+                    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"- Keyboard Interactive is not a authentication method supported by host."];
+
+                } else {
+                    
+                    // if supported, authenticate
+                    NSLog(@"- Authenticating with host...");
+                    if ([channel authenticateByKeyboardInteractive:password]) {
+                        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+                    } else {
+                        NSLog(@"- Error authenticating with host %@", key);
+                        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"- Unable to authenticate with host."];
+                    }
+                }
+            }
+            @catch (NSException *exception) {
+                NSLog(@"Exception: %@", exception);
+                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unexpected exception when executing 'authenticateByKeyboard' action."];
+            }
+            
+            //returning callback resolution
+            [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+        }];
+        
+    }
 }
 
 @end
