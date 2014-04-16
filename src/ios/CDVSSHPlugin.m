@@ -1,126 +1,89 @@
-#import "CDVScpPlugin.h"
 #import <Cordova/CDV.h>
-#import <NMSSH/NMSSH.h>
+#import "CDVSSHPlugin.h"
+#import "SSHChannel.h"
 
-@implementation CDVScpPlugin: CDVPlugin
+@implementation CDVSSHPlugin: CDVPlugin
 
-- (void) copyToRemote:(CDVInvokedUrlCommand *)command {
+- (NSString*)buildKey :(NSString*)host :(int)port {
+    NSString* tempHost = [host lowercaseString];
+    NSString* tempPort = [NSString stringWithFormat:@"%d", port];
     
-    // checking parameters
-    if ([command.arguments count] < 4) {
-        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments for copyToRemote"];
+    return  [[tempHost stringByAppendingString:@":"] stringByAppendingString:tempPort];
+}
+
+- (void)connect:(CDVInvokedUrlCommand*)command
+{
+    // validating parameters
+    if ([command.arguments count] < 3) {
+        
+        // triggering parameter error
+        CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Missing arguments when calling 'connect' action."];
         [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
-    
+        
     } else {
+        
+        // checking connection pool
+        if (!pool) {
+            self->pool = [[NSMutableDictionary alloc] init];
+        }
+        
         
         // running in background to avoid thread locks
         [self.commandDelegate runInBackground:^{
             
+            CDVPluginResult* result= nil;
+            SSHChannel* channel = nil;
+            NSString* key = nil;
+            NSString* host = nil;
+            int port = 0;
+            NSString* username = nil;
             
-            CDVPluginResult* result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
-            NSString* path = @"/tlanBiS/loadinfo/our_output/mrs/";
-            NSString* user = nil;
-            NSString* source = nil;
-            NSString* destination = nil;
-            NSString* absolute = nil;
-            NMSSHSession* session = nil;
-            
+            // opening connection and adding into pool
             @try {
                 
-                // getting parameters
-                user = [command.arguments objectAtIndex:0];
-                self->shhpwd = [command.arguments objectAtIndex:1];
-                source = [command.arguments objectAtIndex:2];
-                destination = [command.arguments objectAtIndex:3];
+                // preparing parameters
+                host = [command.arguments objectAtIndex:0];
+                port = [[command.arguments objectAtIndex:1] integerValue];
+                key = [self buildKey:host :port];
+                username = [command.arguments objectAtIndex:2];
                 
                 
-                // opening SSH session
-                NSLog(@"- Opening connection with %@ ", destination);
-                session = [[NMSSHSession alloc] initWithHost:destination andUsername:user];
-                session.delegate = self;
-                [session connect];
-
-                
-                
-                //NSArray* m = [session supportedAuthenticationMethods];
-                
-                // checking connection
-                if ([session isConnected]) {
-                    NSLog(@"- Connection with host has been stablished!");
-                    NSLog(@"- Authenticating with %@", user);
-                    
-                    // authenticating
-                    [session authenticateByKeyboardInteractive];
-                    
-                    if ([session isAuthorized]) {
-                        NSLog(@"- Authentication succeeded");
-                        
-                        // time to copy
-                        absolute = @"/var/mobile/Applications/C8666784-3B8D-48C4-BD19-E385D9716CF5/Documents/";
-                        absolute = [absolute stringByAppendingString:source];
-                        
-                        NSLog(@"Copying file %@ to %@...", absolute, path);
-                        BOOL cpSuccess = [session.channel uploadFile:absolute to:path];
-
-                        
-                        // checking result
-                        if (cpSuccess) {
-                            NSLog(@"- File copied successfully!");
-                        } else {
-                            NSLog(@"- Error during file copy!");
-                        }
-                        
-                        
-                    } else {
-                        NSLog(@"- Authentication failed");
-                        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed during authentication process."];
-                    }
-                    
-                    // closing connection
-                    [session disconnect];
-                    
+                // checking existing connections
+                if ([pool objectForKey:key]) {
+                    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:key];
+                    NSLog(@"- Recovered connection with %@", key);
                 } else {
-                    NSLog(@"- Unable to connect with host");
-                    result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed during authentication process."];
+                    
+                    // creating connection
+                    NSLog(@"- Opening connection with %@ ", key);
+                    channel = [[SSHChannel alloc] initWithNetworkAddress:host :port];
+                    
+                    // opening connection
+                    if ([channel open:username]) {
+
+                        // connected successfully -- adding to pool
+                        [self->pool setObject:channel forKey:key];
+                        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:key];
+                        NSLog(@"- Established connection with %@", key);
+                    
+                    } else {
+                        NSLog(@"- Unable to connect with host");
+                        result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"- Failed during connection process."];
+                    }
                 }
-                
-                
-                /*
-                NSError *error = nil;
-                NSString *response = [session.channel execute:@"ls -l /var/www/" error:&error];
-                NSLog(@"List of my sites: %@", response);
-                
-                BOOL success = [session.channel uploadFile:@"~/index.html" to:@"/var/www/9muses.se/"];
-                */
             }
             @catch (NSException *exception) {
                 NSLog(@"Exception: %@", exception);
-                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unexpected exception when executing 'copyToRemote' action."];
-                
-                // releasing connection
-                if (session.isConnected) {
-                    [session disconnect];
-                }
+                result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Unexpected exception when executing 'connect' action."];
             }
             
-            // answering
+            //returning callback resolution
             [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
         }];
+        
     }
+    
 }
 
-
-- (void)session:(NMSSHSession *)session didDisconnectWithError:(NSError *)error {
-    NSLog(@"DISCONNECT!!!");
-}
-
-- (NSString *)session:(NMSSHSession *)session keyboardInteractiveRequest:(NSString *)request {
-    NSLog(@"### THIS IS THE REQUEST %@", request);
-    return self->shhpwd;
-}
-- (BOOL)session:(NMSSHSession *)session shouldConnectToHostWithFingerprint:(NSString *)fingerprint{
-    NSLog(@"FINGERPRINT STUFF");
-    return YES;
-}
 
 @end

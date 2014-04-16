@@ -8,9 +8,9 @@ function SSH(){
     this.pluginRef = 'SSH';                              // *** Plugin reference for Cordova.exec calls
 }
 
-// copy method
-SSH.prototype.scp = function (username, password, sourceFile, remoteFile, successCallback, errorCallback) {
-    exec(successCallback, errorCallback, this.pluginRef, 'copyToRemote', [username, password, sourceFile, remoteFile]);
+// connect method
+SSH.prototype.connect = function (host, port, username, successCallback, errorCallback) {
+	exec(successCallback, errorCallback, this.pluginRef, 'connect', [host, port, username]);
 };
 
 module.exports = new SSH();
